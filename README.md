@@ -2,50 +2,13 @@
 
 Production-ready Amazon EKS cluster provisioned with Terraform. Includes a multi-AZ VPC, private/public node groups, IAM roles with least-privilege policies, NAT gateways, and Cluster Autoscaler support.
 
-![CI](https://github.com/Zakaria-Bouhdima/terraform-eks-cluster/actions/workflows/terraform.yml/badge.svg)
+![CI](https://github.com/Zakaria-Bouhdima/Terraform_EKS/actions/workflows/terraform.yml/badge.svg)
 
 ---
 
 ## Architecture
 
-```mermaid
-graph TB
-    Internet([🌐 Internet])
-
-    subgraph AWS["AWS Cloud — ap-south-1"]
-        S3[(S3 Bucket\nTerraform State)]
-
-        subgraph VPC["VPC — 10.0.0.0/16"]
-            IGW[Internet Gateway]
-
-            subgraph AZA["Availability Zone A"]
-                PubA[Public Subnet\n10.0.3.0/24]
-                NatA[NAT Gateway]
-                PriA[Private Subnet\n10.0.1.0/24]
-            end
-
-            subgraph AZB["Availability Zone B"]
-                PubB[Public Subnet\n10.0.4.0/24]
-                NatB[NAT Gateway]
-                PriB[Private Subnet\n10.0.2.0/24]
-            end
-
-            subgraph EKS["EKS Cluster v1.33"]
-                CP[Control Plane\nmanaged by AWS]
-                PriNG[Private Node Group\nt3.small × 1–3]
-                PubNG[Public Node Group\nt3.small × 1–3]
-            end
-        end
-    end
-
-    Internet --> IGW
-    IGW --> PubA & PubB
-    PubA --> NatA --> PriA
-    PubB --> NatB --> PriB
-    PriA & PriB --> PriNG
-    PubA & PubB --> PubNG
-    CP --> PriNG & PubNG
-```
+![Architecture](./architecture.png)
 
 ### What this provisions
 

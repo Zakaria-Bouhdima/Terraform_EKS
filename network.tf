@@ -12,7 +12,7 @@ resource "aws_vpc" "main" {
 
 resource "aws_subnet" "private" {
   for_each = {
-    for subnet in local.private_nested_config : "${subnet.name}" => subnet
+    for subnet in local.private_nested_config : subnet.name => subnet
   }
 
   vpc_id                  = aws_vpc.main.id
@@ -33,13 +33,13 @@ resource "aws_subnet" "private" {
 
 resource "aws_subnet" "public" {
   for_each = {
-    for subnet in local.public_nested_config : "${subnet.name}" => subnet
+    for subnet in local.public_nested_config : subnet.name => subnet
   }
 
   vpc_id                  = aws_vpc.main.id
   cidr_block              = each.value.cidr_block
   availability_zone       = each.value.az
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = true #trivy:ignore:aws-ec2-no-public-ip-subnet
 
   tags = {
     Environment              = var.env
@@ -51,7 +51,6 @@ resource "aws_subnet" "public" {
     ignore_changes = [tags]
   }
 }
-
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
@@ -78,23 +77,22 @@ resource "aws_route_table" "public" {
 
 resource "aws_route_table_association" "public" {
   for_each = {
-    for subnet in local.public_nested_config : "${subnet.name}" => subnet
+    for subnet in local.public_nested_config : subnet.name => subnet
   }
 
   subnet_id      = aws_subnet.public[each.value.name].id
   route_table_id = aws_route_table.public.id
 }
 
-
-#==============NAT-GATEWAY===============
+# ── NAT Gateways ───────────────────────────────────────────────────────────────
 
 resource "aws_eip" "nat" {
   for_each = {
-    for subnet in local.public_nested_config : "${subnet.name}" => subnet
+    for subnet in local.public_nested_config : subnet.name => subnet
     if subnet.nat_gw == true
   }
 
-  vpc = true
+  domain = "vpc"
 
   tags = {
     Environment = var.env
@@ -102,9 +100,9 @@ resource "aws_eip" "nat" {
   }
 }
 
-resource "aws_nat_gateway" "nat-gw" {
+resource "aws_nat_gateway" "nat_gw" {
   for_each = {
-    for subnet in local.public_nested_config : "${subnet.name}" => subnet
+    for subnet in local.public_nested_config : subnet.name => subnet
     if subnet.nat_gw == true
   }
 
@@ -119,7 +117,7 @@ resource "aws_nat_gateway" "nat-gw" {
 
 resource "aws_route_table" "private" {
   for_each = {
-    for subnet in local.public_nested_config : "${subnet.name}" => subnet
+    for subnet in local.public_nested_config : subnet.name => subnet
     if subnet.nat_gw == true
   }
 
@@ -127,7 +125,7 @@ resource "aws_route_table" "private" {
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat-gw[each.value.name].id
+    nat_gateway_id = aws_nat_gateway.nat_gw[each.value.name].id
   }
 
   tags = {
@@ -137,9 +135,8 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route_table_association" "private" {
-
   for_each = {
-    for subnet in local.private_nested_config : "${subnet.name}" => subnet
+    for subnet in local.private_nested_config : subnet.name => subnet
     if subnet.associated_public_subnet != ""
   }
 

@@ -1,0 +1,12 @@
+# aws-eks-no-public-cluster-access
+# Public API endpoint is intentional for this demo cluster to allow kubectl access.
+# In production, restrict public_access_cidrs to known IPs or disable public access entirely.
+AVD-AWS-0040
+
+# aws-ec2-no-public-ip-subnet
+# Public subnets require map_public_ip_on_launch for EKS public node group to function.
+AVD-AWS-0164
+
+# aws-ec2-no-public-egress-sgr
+# Unrestricted egress is required for EKS nodes to pull container images and reach AWS APIs.
+AVD-AWS-0104

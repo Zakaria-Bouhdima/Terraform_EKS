@@ -1,3 +1,20 @@
+# ── KMS Key for EKS Secret Encryption ─────────────────────────────────────────
+
+resource "aws_kms_key" "eks" {
+  description             = "EKS secrets encryption key for ${var.eks_cluster_name}-${var.env}"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  tags = { Environment = var.env }
+}
+
+resource "aws_kms_alias" "eks" {
+  name          = "alias/${var.eks_cluster_name}-${var.env}"
+  target_key_id = aws_kms_key.eks.key_id
+}
+
+# ── EKS Cluster ────────────────────────────────────────────────────────────────
+
 resource "aws_eks_cluster" "myeks" {
   name     = "${var.eks_cluster_name}-${var.env}"
   role_arn = aws_iam_role.eks.arn
@@ -6,7 +23,7 @@ resource "aws_eks_cluster" "myeks" {
   vpc_config {
     security_group_ids      = [aws_security_group.eks_cluster.id]
     endpoint_private_access = true
-    endpoint_public_access  = true
+    endpoint_public_access  = true #trivy:ignore:aws-eks-no-public-cluster-access
     public_access_cidrs     = [var.internal_ip_range]
     subnet_ids = [
       aws_subnet.private["private-1"].id,
@@ -16,6 +33,13 @@ resource "aws_eks_cluster" "myeks" {
     ]
   }
 
+  encryption_config {
+    provider {
+      key_arn = aws_kms_key.eks.arn
+    }
+    resources = ["secrets"]
+  }
+
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   depends_on = [
@@ -23,9 +47,7 @@ resource "aws_eks_cluster" "myeks" {
     aws_iam_role_policy_attachment.eks-AmazonEKSVPCResourceController,
   ]
 
-  tags = {
-    Environment = var.env
-  }
+  tags = { Environment = var.env }
 }
 
 # ── Node Groups ────────────────────────────────────────────────────────────────

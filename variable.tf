@@ -84,11 +84,6 @@ variable "region" {
   description = "AWS region to deploy the cluster in"
 }
 
-variable "az" {
-  type        = list(string)
-  description = "List of availability zones in the chosen region"
-}
-
 variable "env" {
   type        = string
   description = "Deployment environment (e.g. dev, staging, prod)"

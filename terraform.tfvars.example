@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# Never commit terraform.tfvars — it is gitignored.
+
+env              = "dev"
+region           = "ap-south-1"
+az               = ["ap-south-1a", "ap-south-1b"]
+eks_cluster_name = "my-eks-cluster"
+
+# Restrict this to your own IP in production: "203.0.113.10/32"
+internal_ip_range = "0.0.0.0/0"
